@@ -1,4 +1,4 @@
-const CACHE_NAME = 'proyector-biblico-rv-v1.5';
+const CACHE_NAME = 'proyector-biblico-rv-v1.1';
 const ASSETS = [
   './',
   './index.html',

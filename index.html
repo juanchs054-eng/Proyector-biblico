@@ -660,15 +660,14 @@ window.BIBLE_DATA = [{"name": "Génesis", "chapters": [["En el principio crió D
   let projecting = false;
 
   function lockLandscape(){
-    // Intenta forzar el giro a horizontal (funciona en Chrome/Android,
-    // sobre todo cuando la app está instalada). En iPhone (Safari) esta
-    // función no existe: ahí el usuario deberá girar el celular a mano,
-    // ya que iOS no permite forzar la orientación desde la web.
+    // Intenta forzar el giro a horizontal. En Android/Chrome funciona; en
+    // iPhone (Safari) esta función no existe y el usuario deberá girar el
+    // celular a mano, ya que iOS no permite forzar la orientación desde la web.
     try{
       if(screen.orientation && screen.orientation.lock){
-        screen.orientation.lock('landscape').catch(()=>{ /* el dispositivo no lo permitió, seguimos igual */ });
+        screen.orientation.lock('landscape').catch(()=>{ /* el dispositivo no lo permitió */ });
       }
-    }catch(e){ /* API no disponible en este navegador, se ignora */ }
+    }catch(e){ /* API no disponible, se ignora */ }
   }
   function unlockOrientation(){
     try{
@@ -680,12 +679,14 @@ window.BIBLE_DATA = [{"name": "Génesis", "chapters": [["En el principio crió D
     projecting = true;
     document.body.classList.add('projecting');
     syncEntrarSalirButton();
-    // Solo bloqueamos la orientación a horizontal; ya NO pedimos la pantalla
-    // completa real del navegador, porque eso hacía que Chrome mostrara un
-    // aviso ("Para salir de pantalla completa, desliza hacia abajo...").
-    // El modo "projecting" con CSS de arriba ya cubre toda la pantalla
-    // igual, sin ese aviso.
-    lockLandscape();
+    // Pedimos pantalla completa real porque Chrome solo autoriza el giro
+    // forzado a horizontal cuando la página está en pantalla completa.
+    try{
+      const el = document.documentElement;
+      const req = el.requestFullscreen ? el.requestFullscreen() : (el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null);
+      if(req && req.then) req.then(lockLandscape).catch(()=>lockLandscape());
+      else setTimeout(lockLandscape, 300);
+    }catch(e){ lockLandscape(); }
   }
   function exitFullscreen(){
     projecting = false;
@@ -694,6 +695,7 @@ window.BIBLE_DATA = [{"name": "Génesis", "chapters": [["En el principio crió D
     unlockOrientation();
     try{
       if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
     }catch(e){}
   }
   function isProjecting(){ return projecting; }
